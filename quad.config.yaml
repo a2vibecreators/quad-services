@@ -1,0 +1,213 @@
+# QUAD Agent Configuration - quad-services
+# ==========================================
+# Java Spring Boot Backend agent configuration
+#
+# Part of QUAD Framework
+# © 2026 A2Vibe Creators LLC
+
+version: "1.0"
+project: "quad-services"
+type: "api-backend"
+
+# =============================================================================
+# DEFAULT SETTINGS
+# =============================================================================
+
+defaultTimeout: 60000
+defaultMode: HYBRID
+
+# =============================================================================
+# INVOCATION METHODS
+# =============================================================================
+
+invocation:
+  ide: true       # VS Code, IntelliJ
+  cli: true       # quad agent invoke ...
+  chat: true      # Claude, Copilot chat
+  auto: true      # CI/CD, git hooks
+  mcp: true       # Model Context Protocol
+
+# =============================================================================
+# PIPELINES
+# =============================================================================
+
+pipelines:
+  # ---------------------------------------------------------------------------
+  # API Development Pipeline
+  # ---------------------------------------------------------------------------
+  api-development:
+    description: "Develop REST API endpoints"
+    version: "1.0.0"
+    mode: SEQUENTIAL
+    steps:
+      - agentId: api-dev-agent
+        requiredOutput: endpoint_code
+        timeout: 60000
+      - agentId: api-test-agent
+        requiredOutput: test_results
+        timeout: 30000
+      - agentId: security-scanner-agent
+        optional: true
+        timeout: 30000
+
+  # ---------------------------------------------------------------------------
+  # Service Layer Pipeline
+  # ---------------------------------------------------------------------------
+  service-development:
+    description: "Develop business logic services"
+    version: "1.0.0"
+    mode: SEQUENTIAL
+    steps:
+      - agentId: service-dev-agent
+        requiredOutput: service_code
+        timeout: 60000
+      - agentId: unit-test-agent
+        requiredOutput: test_results
+        timeout: 30000
+
+  # ---------------------------------------------------------------------------
+  # Integration Pipeline
+  # ---------------------------------------------------------------------------
+  integration:
+    description: "Develop external integrations (AI, Git, Calendar)"
+    version: "1.0.0"
+    mode: SEQUENTIAL
+    steps:
+      - agentId: integration-dev-agent
+        requiredOutput: integration_code
+        timeout: 60000
+      - agentId: integration-test-agent
+        requiredOutput: test_results
+        timeout: 30000
+
+  # ---------------------------------------------------------------------------
+  # Code Review Pipeline
+  # ---------------------------------------------------------------------------
+  code-review:
+    description: "Review API code changes"
+    version: "1.0.0"
+    mode: SEQUENTIAL
+    steps:
+      - agentId: security-scanner-agent
+        requiredOutput: security_report
+      - agentId: api-review-agent
+        requiredOutput: review_comments
+      - agentId: performance-analyzer-agent
+        optional: true
+
+# =============================================================================
+# PERMISSIONS
+# =============================================================================
+
+permissions:
+  # API Development Agent
+  api-dev-agent:
+    canRead:
+      - "src/**"
+      - "pom.xml"
+    canWrite:
+      - "src/main/java/**/controller/**"
+      - "src/main/java/**/dto/**"
+      - "src/main/java/**/mapper/**"
+    cannotWrite:
+      - "src/main/resources/application*.properties"
+    canInvoke:
+      - api-test-agent
+      - security-scanner-agent
+
+  # Service Development Agent
+  service-dev-agent:
+    canRead:
+      - "src/**"
+    canWrite:
+      - "src/main/java/**/service/**"
+      - "src/main/java/**/repository/**"
+      - "src/main/java/**/entity/**"
+    cannotWrite:
+      - "src/main/resources/**"
+    canInvoke:
+      - unit-test-agent
+
+  # Integration Development Agent
+  integration-dev-agent:
+    canRead:
+      - "src/**"
+    canWrite:
+      - "src/main/java/**/integration/**"
+      - "src/main/java/**/client/**"
+      - "src/main/java/**/provider/**"
+    canInvoke:
+      - integration-test-agent
+
+  # Test Agents
+  api-test-agent:
+    canRead:
+      - "src/**"
+    canWrite:
+      - "src/test/**"
+    canInvoke: []
+
+  unit-test-agent:
+    canRead:
+      - "src/**"
+    canWrite:
+      - "src/test/**"
+    canInvoke: []
+
+  integration-test-agent:
+    canRead:
+      - "src/**"
+    canWrite:
+      - "src/test/**"
+    canInvoke: []
+
+  # Scanner Agents (read-only)
+  security-scanner-agent:
+    canRead:
+      - "src/**"
+      - "pom.xml"
+    canWrite: []
+    canInvoke: []
+
+  performance-analyzer-agent:
+    canRead:
+      - "src/**"
+    canWrite: []
+    canInvoke: []
+
+  # Deploy Agents
+  deploy-agent-dev:
+    canInvoke: []
+    requiresApproval: false
+
+  deploy-agent-prod:
+    canInvoke: []
+    requiresApproval: true
+
+# =============================================================================
+# AUDIT SETTINGS
+# =============================================================================
+
+audit:
+  enabled: true
+  retentionDays: 90
+  sensitiveFields:
+    - password
+    - token
+    - secret
+    - apiKey
+    - authorization
+    - credentials
+
+# =============================================================================
+# TECHNOLOGY STACK (for agent context)
+# =============================================================================
+
+stack:
+  framework: "Spring Boot 3.2"
+  language: "Java 21"
+  build: "Maven"
+  database: "PostgreSQL"
+  orm: "Spring Data JPA"
+  testing: "JUnit 5, Mockito"
+  api: "REST, WebClient"

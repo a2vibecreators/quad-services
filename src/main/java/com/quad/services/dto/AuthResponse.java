@@ -12,6 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthResponse {
+    private Boolean success;
     private String token;
     private UUID userId;
     private String email;

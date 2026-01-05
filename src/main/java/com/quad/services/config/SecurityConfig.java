@@ -28,6 +28,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/users/**").permitAll()  // Allow user lookup for OAuth
                         .requestMatchers("/health").permitAll()
                         .anyRequest().authenticated()
                 );

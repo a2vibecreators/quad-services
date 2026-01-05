@@ -84,6 +84,7 @@ public class AuthService {
             String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole(), organization.getId());
 
             return AuthResponse.builder()
+                    .success(true)
                     .token(token)
                     .userId(user.getId())
                     .email(user.getEmail())
@@ -98,6 +99,7 @@ public class AuthService {
         // For passwordless (non-OAuth), requires OTP verification
         // TODO: Generate and send OTP
         return AuthResponse.builder()
+                .success(true)
                 .userId(user.getId())
                 .email(user.getEmail())
                 .requiresVerification(true)
@@ -131,6 +133,7 @@ public class AuthService {
                         .orElse(null) : null;
 
         return AuthResponse.builder()
+                .success(true)
                 .token(token)
                 .userId(user.getId())
                 .email(user.getEmail())

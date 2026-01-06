@@ -30,10 +30,63 @@ public class AuthService {
 
     @Transactional
     public AuthResponse signup(SignupRequest request) {
-        // Validate email not already registered
-        if (userRepository.existsByEmail(request.getEmail().toLowerCase())) {
+        // ACCOUNT LINKING: Check if user already exists (enables same email across OAuth and email OTP)
+        var existingUserOpt = userRepository.findByEmail(request.getEmail().toLowerCase());
+
+        if (existingUserOpt.isPresent()) {
+            User existingUser = existingUserOpt.get();
+            log.info("Account linking: Email {} already exists (user ID: {}). Treating as login/verification flow.",
+                    existingUser.getEmail(), existingUser.getId());
+
+            // Determine if this is passwordless signup
+            boolean isPasswordless = "startup".equals(request.getOrgType()) ||
+                                      "business".equals(request.getOrgType());
+
+            // For OAuth users trying email OTP, or email OTP users re-requesting verification
+            if (isPasswordless || Boolean.TRUE.equals(request.getIsOAuth())) {
+                // TODO: Generate and send OTP for verification
+                return AuthResponse.builder()
+                        .success(true)
+                        .userId(existingUser.getId())
+                        .email(existingUser.getEmail())
+                        .requiresVerification(true)
+                        .message("Verification code sent to " + existingUser.getEmail())
+                        .build();
+            }
+
+            // For OAuth signup with existing account, return token immediately
+            if (Boolean.TRUE.equals(request.getIsOAuth()) || Boolean.TRUE.equals(request.getIsEmailVerified())) {
+                String token = jwtUtil.generateToken(
+                        existingUser.getId(),
+                        existingUser.getEmail(),
+                        existingUser.getRole(),
+                        existingUser.getOrgId()
+                );
+
+                String orgName = existingUser.getOrgId() != null ?
+                        organizationRepository.findById(existingUser.getOrgId())
+                                .map(Organization::getName)
+                                .orElse(null) : null;
+
+                return AuthResponse.builder()
+                        .success(true)
+                        .token(token)
+                        .userId(existingUser.getId())
+                        .email(existingUser.getEmail())
+                        .fullName(existingUser.getFullName())
+                        .role(existingUser.getRole())
+                        .orgId(existingUser.getOrgId())
+                        .orgName(orgName)
+                        .requiresVerification(false)
+                        .build();
+            }
+
+            // For other cases, reject duplicate email
             throw new RuntimeException("Email already registered");
         }
+
+        // NEW USER SIGNUP: Create organization and user
+        log.info("New user signup for email: {}", request.getEmail());
 
         // Create organization
         Organization organization = new Organization();

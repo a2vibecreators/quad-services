@@ -2,6 +2,14 @@ package com.quad.services.controller;
 
 import com.quad.services.entity.User;
 import com.quad.services.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -11,24 +19,48 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * User Management Controller
+ *
+ * Handles user lookup and profile operations. Currently used primarily for OAuth account linking.
+ * All endpoints in this controller are publicly accessible for OAuth integration.
+ *
+ * @author QUAD Platform
+ * @since 1.0.0
+ */
 @RestController
-@RequestMapping("/users")
+@RequestMapping("${api.version.prefix:/v1}/users")
 @RequiredArgsConstructor
 @Slf4j
 @CrossOrigin(origins = "*")  // TODO: Configure properly for production
+@Tag(name = "User Management", description = "User profile and lookup endpoints")
 public class UserController {
 
     private final UserService userService;
 
-    /**
-     * GET /users/email/{email}
-     * Find user by email address (used by NextAuth OAuth callback for account linking)
-     *
-     * @param email User's email address (URL encoded)
-     * @return User object if found, 404 if not found
-     */
+    @Operation(
+            summary = "Find user by email address",
+            description = "Lookup user account by email. Used by OAuth providers for account linking. " +
+                    "Returns full user profile if found."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User found",
+                    content = @Content(schema = @Schema(implementation = User.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "User not found",
+                    content = @Content
+            )
+    })
+    @SecurityRequirement(name = "")  // Publicly accessible endpoint
     @GetMapping("/email/{email}")
-    public ResponseEntity<?> getUserByEmail(@PathVariable String email) {
+    public ResponseEntity<?> getUserByEmail(
+            @Parameter(description = "User's email address", required = true, example = "user@example.com")
+            @PathVariable String email
+    ) {
         try {
             log.info("GET /users/email/{} - Looking up user", email);
 
@@ -50,15 +82,24 @@ public class UserController {
         }
     }
 
-    /**
-     * GET /users/email/{email}/exists
-     * Check if user exists without returning full user data
-     *
-     * @param email User's email address (URL encoded)
-     * @return { "exists": true/false }
-     */
+    @Operation(
+            summary = "Check if user exists by email",
+            description = "Check if a user account exists without returning full profile data. " +
+                    "Useful for validation during signup or account linking."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Check completed successfully",
+                    content = @Content
+            )
+    })
+    @SecurityRequirement(name = "")  // Publicly accessible endpoint
     @GetMapping("/email/{email}/exists")
-    public ResponseEntity<?> checkUserExists(@PathVariable String email) {
+    public ResponseEntity<?> checkUserExists(
+            @Parameter(description = "User's email address", required = true, example = "user@example.com")
+            @PathVariable String email
+    ) {
         try {
             log.info("GET /users/email/{}/exists - Checking if user exists", email);
             boolean exists = userService.existsByEmail(email);

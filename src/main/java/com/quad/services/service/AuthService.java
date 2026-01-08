@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -112,10 +111,8 @@ public class AuthService {
         user.setEmail(request.getEmail().toLowerCase());
         user.setPasswordHash(passwordEncoder.encode(finalPassword));
         user.setFullName(request.getFullName());
-        user.setName(request.getFullName());
         user.setRole("OWNER");
         user.setOrgId(organization.getId());
-        user.setCompanyId(organization.getId());  // Backward compatibility
         user.setIsActive(true);
         user.setIsAdmin(true);
 

@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(apiVersionPrefix + "/auth/**").permitAll()  // Authentication
                         .requestMatchers(apiVersionPrefix + "/users/**").permitAll()  // User lookup for OAuth
+                        .requestMatchers(apiVersionPrefix + "/agent-rules/**").permitAll()  // Agent rules for VS Code extension
                         .requestMatchers("/health").permitAll()  // Health check (no version)
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()  // Swagger UI
                         .requestMatchers("/v3/api-docs/**").permitAll()  // OpenAPI JSON spec
